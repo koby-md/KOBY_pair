@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>KOBY BOT - WhatsApp Linker</title>
+  <title>Knight Bot - WhatsApp Linker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   <style>
     :root {
-      --primary-color: #8a2be2; /* تم تغيير اللون إلى البنفسجي */
+      --primary-color: #000000;
       --secondary-color: #ffffff;
       --accent-color: #f0f0f0;
       --text-color: #000000;
       --background-color: #ffffff;
       --hover-color: #f5f5f5;
-      --border-color: rgba(138, 43, 226, 0.15);
+      --border-color: rgba(0, 0, 0, 0.1);
     }
 
     * {
@@ -39,7 +39,7 @@
       background: var(--background-color);
       border-radius: 16px;
       padding: 25px;
-      box-shadow: 0 4px 24px rgba(138, 43, 226, 0.15);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
       border: 1px solid var(--border-color);
     }
 
@@ -59,7 +59,7 @@
       justify-content: center;
       font-size: 28px;
       color: white;
-      box-shadow: 0 4px 12px rgba(138, 43, 226, 0.2);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     }
 
     .title {
@@ -73,6 +73,36 @@
       font-size: 14px;
       color: rgba(0, 0, 0, 0.7);
       margin-bottom: 20px;
+    }
+
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .social-icons a {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .social-icons a.youtube { background: #FF0000; }
+    .social-icons a.telegram { background: #0088cc; }
+    .social-icons a.whatsapp { background: #0cfa10; }
+    .social-icons a.github { background: #333; }
+
+    .social-icons a:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
     /* Toggle Switch Styles */
@@ -111,7 +141,6 @@
     .toggle-option:hover:not(.active) {
       background: var(--background-color);
     }
-
     .copy-btn {
       width: 100%;
       padding: 12px;
@@ -161,7 +190,7 @@
     .input-field:focus {
       outline: none;
       border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.15);
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
     }
 
     .generate-btn {
@@ -180,7 +209,7 @@
 
     .generate-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .generate-btn.hidden {
@@ -227,7 +256,7 @@
     }
 
     .success-message {
-      color: var(--primary-color);
+      color: #000aff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -295,9 +324,17 @@
   <div class="container">
     <div class="header">
       <div class="logo"><i class="fas fa-robot"></i></div>
-      <h1 class="title">KOBY BOT</h1> <p class="subtitle">Link your WhatsApp device</p>
+      <h1 class="title">Knight Bot</h1>
+      <p class="subtitle">Link your WhatsApp device</p>
+      <div class="social-icons">
+        <a href="https://www.youtube.com/@mr_unique_hacker?sub_confirmation=1" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
+        <a href="https://t.me/+hxojkc7kaVViYzdl" target="_blank" class="telegram"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://whatsapp.com/channel/0029Va90zAnIHphOuO8Msp3A" target="_blank" class="whatsapp"><i class="fab fa-whatsapp"></i></a>
+        <a href="https://github.com/mruniquehacker/Knightbot-md" target="_blank" class="github"><i class="fab fa-github"></i></a>
       </div>
+    </div>
 
+    <!-- Toggle Switch -->
     <div class="toggle-container">
       <div class="toggle-option active" data-mode="pair">
         <i class="fas fa-key"></i> Pair Code
@@ -336,7 +373,8 @@
     </button>
 
     <div class="footer">
-      <p>© 2025 Mr Unique Hacker | KOBY BOT</p> </div>
+      <p>© 2025 Mr Unique Hacker | Knight Bot</p>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.0.0-alpha.1/axios.min.js"></script>
@@ -444,7 +482,6 @@
         loadingSpinner.style.display = "none";
       }
     });
-
     function copyCode() {
       const codeDisplay = document.getElementById("codeDisplay").innerText;
       const code = codeDisplay.replace('CODE: ', '');
