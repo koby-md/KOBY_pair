@@ -4,9 +4,12 @@ import pino from 'pino';
 import { makeWASocket, useMultiFileAuthState, delay, makeCacheableSignalKeyStore, Browsers, jidNormalizedUser, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import pn from 'awesome-phonenumber';
 
-const router = express.Router();
+const app = express();
+const port = process.env.PORT || 7860; // منفذ هادجينج فيس الافتراضي
 
-// Ensure the session directory exists
+app.use(express.json());
+
+// دالة حذف المجلد المؤقت للجلسة
 function removeFile(FilePath) {
     try {
         if (!fs.existsSync(FilePath)) return false;
@@ -16,32 +19,42 @@ function removeFile(FilePath) {
     }
 }
 
-router.get('/', async (req, res) => {
+// مسار رئيسي لعرض حالة السيرفر وتجنب إغلاق المنصة للحاوية
+app.get('/', (req, res) => {
+    res.send({ status: "alive", message: "KOBY BOT Pairing Service is running perfectly!" });
+});
+
+// مسار الحصول على رمز الاقتران (مثال: /pair?number=212612345678)
+app.get('/pair', async (req, res) => {
     let num = req.query.number;
+    if (!num) {
+        return res.status(400).send({ code: 'يرجى إدخال رقم الهاتف في الرابط. مثال: /pair?number=212612345678' });
+    }
+
     let dirs = './' + (num || `session`);
 
-    // Remove existing session if present
+    // إزالة الجلسة السابقة إن وجدت
     await removeFile(dirs);
 
-    // Clean the phone number - remove any non-digit characters
+    // تنظيف الرقم من أي رموز
     num = num.replace(/[^0-9]/g, '');
 
-    // Validate the phone number using awesome-phonenumber
+    // التحقق من صحة الرقم
     const phone = pn('+' + num);
     if (!phone.isValid()) {
         if (!res.headersSent) {
-            return res.status(400).send({ code: 'رقم الهاتف غير صحيح. يرجى إدخال الرقم الدولي الكامل (مثال: 212612345678) بدون رمز + أو مسافات.' });
+            return res.status(400).send({ code: 'رقم الهاتف غير صحيح. يرجى إدخال الرقم الدولي الكامل بدون رمز + أو مسافات.' });
         }
         return;
     }
-    // Use the international number format (E.164, without '+')
+    
     num = phone.getNumber('e164').replace('+', '');
 
     async function initiateSession() {
         const { state, saveCreds } = await useMultiFileAuthState(dirs);
 
         try {
-            const { version, isLatest } = await fetchLatestBaileysVersion();
+            const { version } = await fetchLatestBaileysVersion();
             let KobyBot = makeWASocket({
                 version,
                 auth: {
@@ -65,57 +78,33 @@ router.get('/', async (req, res) => {
 
                 if (connection === 'open') {
                     console.log("✅ Connected successfully!");
-                    console.log("📱 Sending session file to user...");
-
                     try {
                         const sessionKoby = fs.readFileSync(dirs + '/creds.json');
-
-                        // 1. إرسال ملف الـ جيسون فقط للمستخدم
                         const userJid = jidNormalizedUser(num + '@s.whatsapp.net');
+                        
+                        // 1. إرسال ملف الـ creds.json
                         await KobyBot.sendMessage(userJid, {
                             document: sessionKoby,
                             mimetype: 'application/json',
                             fileName: 'creds.json'
                         });
-                        console.log("📄 Session file sent successfully");
 
-                        // 2. إرسال رسالة التحذير بالعربية مباشرة بعد الملف
+                        // 2. إرسال رسالة التحذير
                         await KobyBot.sendMessage(userJid, {
-                            text: `⚠️ *تنبيه هام: لا تشارك هذا الملف مع أي شخص مطلقاً* ⚠️\n 
-┌┤✑  شكراً لاستخدامك KOBY BOT
-│└────────────┈ ⳹        
-│©2025 KOBY BOT
-└─────────────────┈ ⳹\n\n`
+                            text: `⚠️ *تنبيه هام: لا تشارك هذا الملف مع أي شخص مطلقاً* ⚠️\n \n┌┤✑  شكراً لاستخدامك KOBY BOT\n│└────────────┈ ⳹        \n│©2026 KOBY BOT\n└─────────────────┈ ⳹\n\n`
                         });
-                        console.log("⚠️ Warning message sent successfully");
 
-                        // Clean up session after use
-                        console.log("🧹 Cleaning up session...");
                         await delay(1000);
                         removeFile(dirs);
-                        console.log("✅ Session cleaned up successfully");
-                        console.log("🎉 Process completed successfully!");
                     } catch (error) {
                         console.error("❌ Error sending messages:", error);
                         removeFile(dirs);
                     }
                 }
 
-                if (isNewLogin) {
-                    console.log("🔐 New login via pair code");
-                }
-
-                if (isOnline) {
-                    console.log("📶 Client is online");
-                }
-
                 if (connection === 'close') {
                     const statusCode = lastDisconnect?.error?.output?.statusCode;
-
-                    if (statusCode === 401) {
-                        console.log("❌ Logged out from WhatsApp. Need to generate new pair code.");
-                    } else {
-                        console.log("🔁 Connection closed — restarting...");
+                    if (statusCode !== 401) {
                         initiateSession();
                     }
                 }
@@ -136,7 +125,7 @@ router.get('/', async (req, res) => {
                 } catch (error) {
                     console.error('Error requesting pairing code:', error);
                     if (!res.headersSent) {
-                        res.status(503).send({ code: 'فشل في الحصول على رمز الاقتران. يرجى التحقق من رقم الهاتف والمحاولة مرة أخرى.' });
+                        res.status(503).send({ code: 'فشل في الحصول على رمز الاقتران.' });
                     }
                 }
             }
@@ -153,21 +142,14 @@ router.get('/', async (req, res) => {
     await initiateSession();
 });
 
-// Global uncaught exception handler
-process.on('uncaughtException', (err) => {
-    let e = String(err);
-    if (e.includes("conflict")) return;
-    if (e.includes("not-authorized")) return;
-    if (e.includes("Socket connection timeout")) return;
-    if (e.includes("rate-overlimit")) return;
-    if (e.includes("Connection Closed")) return;
-    if (e.includes("Timed Out")) return;
-    if (e.includes("Value not found")) return;
-    if (e.includes("Stream Errored")) return;
-    if (e.includes("Stream Errored (restart required)")) return;
-    if (e.includes("statusCode: 515")) return;
-    if (e.includes("statusCode: 503")) return;
-    console.log('Caught exception: ', err);
+// تشغيل سيرفر الويب والاستماع للمنفذ المطلوب لـ Hugging Face لضمان استمرار العمل
+app.listen(port, () => {
+    console.log(`🚀 Server is running and listening on port ${port}`);
 });
 
-export default router;
+// التعامل مع الأخطاء غير المتوقعة لمنع انهيار التطبيق
+process.on('uncaughtException', (err) => {
+    let e = String(err);
+    if (e.includes("conflict") || e.includes("not-authorized") || e.includes("timeout") || e.includes("Closed")) return;
+    console.log('Caught exception: ', err);
+});
